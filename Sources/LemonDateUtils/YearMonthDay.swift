@@ -8,12 +8,13 @@
 import DateHelper
 import Foundation
 
+// MARK: - YearMonthDay
+
 // import HorizonCalendar
 
 public struct YearMonthDay: Hashable, Equatable {
-    public let year: Int
-    public let month: Int
-    public let day: Int
+    // MARK: Lifecycle
+
     //    public let weekday: Int
 
     public init(date: Date) {
@@ -31,6 +32,16 @@ public struct YearMonthDay: Hashable, Equatable {
         //        self.weekday = weekday
     }
 
+    // MARK: Public
+
+    public let year: Int
+    public let month: Int
+    public let day: Int
+
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.year == rhs.year && lhs.month == rhs.month && lhs.day == rhs.day
+    }
+
     public func hash(into hasher: inout Hasher) {
         hasher.combine(year)
         hasher.combine(month)
@@ -40,9 +51,27 @@ public struct YearMonthDay: Hashable, Equatable {
     public func toString() -> String {
         return "\(year)-\(month)-\(day)"
     }
+}
 
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        return lhs.year == rhs.year && lhs.month == rhs.month && lhs.day == rhs.day
+// MARK: Comparable
+
+extension YearMonthDay: Comparable {
+    public static func < (lhs: YearMonthDay, rhs: YearMonthDay) -> Bool {
+        if lhs.year != rhs.year {
+            return lhs.year < rhs.year
+        } else if lhs.month != rhs.month {
+            return lhs.month < rhs.month
+        } else {
+            return lhs.day < rhs.day
+        }
+    }
+}
+
+// MARK: Identifiable
+
+extension YearMonthDay: Identifiable {
+    public var id: String {
+        return "\(year)-\(month)-\(day)"
     }
 }
 
@@ -174,5 +203,3 @@ extension Date {
         return adjust(for: .endOfYear)?.adjust(for: .endOfDay)
     }
 }
-
-
