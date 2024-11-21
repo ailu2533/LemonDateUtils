@@ -67,6 +67,10 @@ extension YearMonthDay: Comparable {
     }
 }
 
+// MARK: Sendable
+
+extension YearMonthDay: Sendable {}
+
 // MARK: Identifiable
 
 extension YearMonthDay: Identifiable {
