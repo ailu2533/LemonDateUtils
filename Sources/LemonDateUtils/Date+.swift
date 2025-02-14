@@ -114,11 +114,11 @@ extension Date {
         return adjust(for: .endOfYear)?.adjust(for: .endOfDay)
     }
 
-    var startOfDay: Date {
+    public var startOfDay: Date {
         self.adjust(for: .startOfDay)!
     }
 
-    var endOfDay: Date {
+    public var endOfDay: Date {
         self.adjust(for: .endOfDay)!
     }
 }
