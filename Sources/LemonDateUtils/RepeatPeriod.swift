@@ -9,21 +9,27 @@ import DateHelper
 import Foundation
 import SwiftUI
 
+// MARK: - RecurrenceType
+
 // 重复类型
 public enum RecurrenceType: Int, Codable {
     case singleCycle = 1 // 周期性重复，一个周期只重复一次
     case customWeekly = 2 // 自定义每周重复，一周可以重复多次
 }
 
-public enum RepeatPeriod: Int, CaseIterable, Identifiable, Codable {
-    public var id: Int {
-        rawValue
-    }
+// MARK: - RepeatPeriod
 
+public enum RepeatPeriod: Int, CaseIterable, Identifiable, Codable {
     case daily = 0
     case weekly = 1
     case monthly = 2
     case yearly = 3
+
+    // MARK: Public
+
+    public var id: Int {
+        rawValue
+    }
 
     public var text: String {
         switch self {
@@ -48,7 +54,8 @@ public func calculateNearestRepeatDate(
         return calculateCustomWeeklyRepeatDate(currentDate: currentDate, customWeek: customWeek)
     default:
         return calculateStandardRepeatDate(
-            startDate: startDate, currentDate: currentDate, repeatPeriod: repeatPeriod, interval: interval)
+            startDate: startDate, currentDate: currentDate, repeatPeriod: repeatPeriod, interval: interval
+        )
     }
 }
 

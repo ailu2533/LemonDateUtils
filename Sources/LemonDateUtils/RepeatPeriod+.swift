@@ -49,13 +49,15 @@ public func calculateLastRepeatDateBeforeEndDate(
         let daysBetween = calendar.dateComponents([.day], from: startDate, to: endDate).day!
         let numberOfPeriods = daysBetween / (interval * 7)
         result = max(
-            result, calendar.date(byAdding: .day, value: numberOfPeriods * interval * 7, to: startDate)!)
+            result, calendar.date(byAdding: .day, value: numberOfPeriods * interval * 7, to: startDate)!
+        )
 
     case .monthly:
         let monthsBetween = calendar.dateComponents([.month], from: startDate, to: endDate).month!
         let numberOfPeriods = monthsBetween / interval
         result = max(
-            result, calendar.date(byAdding: .month, value: numberOfPeriods * interval, to: startDate)!)
+            result, calendar.date(byAdding: .month, value: numberOfPeriods * interval, to: startDate)!
+        )
 
     case .yearly:
         let yearsBetween = calendar.dateComponents([.year], from: startDate, to: endDate).year!

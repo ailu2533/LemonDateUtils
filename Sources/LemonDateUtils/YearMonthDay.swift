@@ -12,24 +12,30 @@ import Foundation
 
 // import HorizonCalendar
 
-public struct YearMonthDay: Hashable, Equatable {
+public struct YearMonthDay: Hashable, Equatable, Sendable {
+    // 1. 添加日期格式化器
+    private static let formatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+    
     // MARK: Lifecycle
 
     //    public let weekday: Int
 
     public init(date: Date) {
-        let dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: date)
-        year = dateComponents.year!
-        month = dateComponents.month!
-        day = dateComponents.day!
-        //        weekday = dateComponents.weekday!
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month, .day], from: date)
+        self.year = components.year ?? 1970
+        self.month = components.month ?? 1
+        self.day = components.day ?? 1
     }
 
     public init(year: Int, month: Int, day: Int) {
         self.year = year
         self.month = month
         self.day = day
-        //        self.weekday = weekday
     }
 
     // MARK: Public
@@ -48,8 +54,38 @@ public struct YearMonthDay: Hashable, Equatable {
         hasher.combine(day)
     }
 
+    // 添加格式化选项枚举
+    public enum DateFormat {
+        case iso8601        // 2024-04-01
+        case compact        // 20240401
+        case slash         // 2024/04/01
+        case chinese       // 2024年04月01日
+        case custom(String) // 自定义格式
+    }
+
+    // 替换原有的 toString 方法
+    public func formatted(_ format: DateFormat = .iso8601) -> String {
+        switch format {
+        case .iso8601:
+            return String(format: "%04d-%02d-%02d", year, month, day)
+        case .compact:
+            return String(format: "%04d%02d%02d", year, month, day)
+        case .slash:
+            return String(format: "%04d/%02d/%02d", year, month, day)
+        case .chinese:
+            return String(format: "%04d年%02d月%02d日", year, month, day)
+        case .custom(let pattern):
+            return pattern
+                .replacingOccurrences(of: "yyyy", with: String(format: "%04d", year))
+                .replacingOccurrences(of: "MM", with: String(format: "%02d", month))
+                .replacingOccurrences(of: "dd", with: String(format: "%02d", day))
+        }
+    }
+
+    // 保留 toString 作为兼容方法
+    @available(*, deprecated, renamed: "formatted()")
     public func toString() -> String {
-        return "\(year)-\(month)-\(day)"
+        formatted()
     }
 }
 
@@ -67,10 +103,6 @@ extension YearMonthDay: Comparable {
     }
 }
 
-// MARK: Sendable
-
-extension YearMonthDay: Sendable {}
-
 // MARK: Identifiable
 
 extension YearMonthDay: Identifiable {
@@ -85,125 +117,24 @@ extension YearMonthDay {
         return .init(year: components.year!, month: components.month!, day: components.day!)
     }
 
-    //    public static func fromDayComponents(_ date: DayComponents) -> YearMonthDay {
-    //        let year = date.month.year
-    //        let month = date.month.month
-    //        let day = date.day
-    //
-    //        return .init(year: year, month: month, day: day)
-    //    }
-
-    public func date() -> Date {
+    public func date() -> Date? {
         let components = DateComponents(year: year, month: month, day: day)
-
-        return Calendar.current.date(from: components)!
-    }
-}
-
-extension Date {
-    /// Returns the start of the week for the given date.
-    /// - Parameter usingMondayAsFirstDay: A Boolean value indicating whether Monday should be considered the first day of the week.
-    /// - Returns: The date representing the start of the week.
-    public func startOfWeek(usingMondayAsFirstDay: Bool = true) -> Date? {
-        let calendar = configuredCalendar(usingMondayAsFirstDay: usingMondayAsFirstDay)
-        return adjust(for: .startOfWeek, calendar: calendar)?.adjust(for: .startOfDay)
+        return Calendar.current.date(from: components)
     }
 
-    /// Returns the end of the week for the given date.
-    /// - Parameter usingMondayAsFirstDay: A Boolean value indicating whether Monday should be considered the first day of the week.
-    /// - Returns: The date representing the end of the week.
-    public func endOfWeek(usingMondayAsFirstDay: Bool = true) -> Date? {
-        let calendar = configuredCalendar(usingMondayAsFirstDay: usingMondayAsFirstDay)
-        return adjust(for: .endOfWeek, calendar: calendar)?.adjust(for: .endOfDay)
+    public init?(string: String) {
+        guard let date = Self.formatter.date(from: string) else { return nil }
+        self.init(date: date)
     }
 
-    /// Configures the calendar based on whether Monday is considered the first day of the week.
-    /// - Parameter usingMondayAsFirstDay: A Boolean value indicating whether Monday should be considered the first day of the week.
-    /// - Returns: A configured `Calendar` instance.
-    private func configuredCalendar(usingMondayAsFirstDay: Bool) -> Calendar {
-        var calendar = Calendar.current
-        if usingMondayAsFirstDay {
-            calendar = Calendar(identifier: .gregorian)
-            calendar.firstWeekday = 2 // Monday
+    public var isToday: Bool {
+        self == Self(date: Date())
+    }
+
+    public func adding(days: Int) -> YearMonthDay? {
+        guard let newDate = Calendar.current.date(byAdding: .day, value: days, to: date() ?? Date()) else {
+            return nil
         }
-        return calendar
-    }
-
-    public var startOfMonth: Date? {
-        return adjust(for: .startOfMonth)?.adjust(for: .startOfDay)
-    }
-
-    public var endOfMonth: Date? {
-        return adjust(for: .endOfMonth)?.adjust(for: .endOfDay)
-    }
-
-    // 获取前一天日期
-    public var prevDay: Date? {
-        return Calendar.current.date(byAdding: .day, value: -1, to: self)
-    }
-
-    // 获取后一天日期
-    public var nextDay: Date? {
-        return Calendar.current.date(byAdding: .day, value: 1, to: self)
-    }
-
-    // 获取上个月日期
-    public var prevMonth: Date? {
-        let calendar = Calendar.current
-        return calendar.date(byAdding: .month, value: -1, to: self)
-    }
-
-    // 获取下个月日期
-    public var nextMonth: Date? {
-        let calendar = Calendar.current
-        return calendar.date(byAdding: .month, value: 1, to: self)
-    }
-
-    // 获取上个月日期
-    public var prevYear: Date? {
-        let calendar = Calendar.current
-        return calendar.date(byAdding: .year, value: -1, to: self)
-    }
-
-    // 获取下个月日期
-    public var nextYear: Date? {
-        let calendar = Calendar.current
-        return calendar.date(byAdding: .year, value: 1, to: self)
-    }
-
-    // 获取上周日期
-    public var prevWeek: Date? {
-        let calendar = Calendar.current
-        return calendar.date(byAdding: .weekOfYear, value: -1, to: self)
-    }
-
-    // 获取下周日期
-    public var nextWeek: Date? {
-        let calendar = Calendar.current
-        return calendar.date(byAdding: .weekOfYear, value: 1, to: self)
-    }
-
-    public var weekdayOfMonthStart: Int {
-        let weekday = adjust(for: .startOfMonth)?.component(.weekday)
-        // 减二的原因是
-        // 1. weekday 是 1到 7，
-        // 2. sunday 是 1，要修改为 monday 是 1
-
-        return weekday! - 2
-    }
-
-    // 计算这个日期所在月份的天数
-    public var daysInMonth: Int {
-        let calendar = Calendar.current
-        let range = calendar.range(of: .day, in: .month, for: self)
-        return range?.count ?? 30 // 如果无法获取到天数，默认返回30天
-    }
-
-    public var startOfYear: Date? {
-        return adjust(for: .startOfYear)?.adjust(for: .startOfDay)
-    }
-
-    public var endOfYear: Date? {
-        return adjust(for: .endOfYear)?.adjust(for: .endOfDay)
+        return YearMonthDay(date: newDate)
     }
 }
